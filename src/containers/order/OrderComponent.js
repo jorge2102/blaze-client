@@ -2,20 +2,23 @@ import { React, useState } from "react";
 import { useHistory } from "react-router-dom";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Table, TableContainer, TableHead, TableCell, TableBody, TableRow, Button, Paper } from '@material-ui/core';
 import { Edit, Delete, AddCircle } from '@material-ui/icons';
 import DeleteModal from '../../components/DeleteModal';
 import { Constants } from "../../utils/constants";
+import DateTime from "../../utils/DateTime";
+import { setOrders } from "../../redux/actions/orderActions";
 
 const OrderComponent = () => {
     const orders = useSelector((state) => state.allOrders.orders);
-    const [currentProduct, setCurrentProduct] = useState({});
+    const dispatch = useDispatch();
+    const [currentOrder, setCurrentOrder] = useState({});
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const history = useHistory();
 
-    const showDeleteProductModal = (product) => {
-        setCurrentProduct(product);
+    const showDeleteOrderModal = (order) => {
+        setCurrentOrder(order);
         switchShowDeleteModal();
     };
 
@@ -23,7 +26,7 @@ const OrderComponent = () => {
         setShowDeleteModal(!showDeleteModal);
     };
 
-    const deleteProduct = async (id) => {
+    const deleteOrder = async (id) => {
         const response = await axios.
             delete(`${Constants.API_URL_ORDER}/${id}`)
             .catch((err) => {
@@ -31,10 +34,23 @@ const OrderComponent = () => {
             });
 
         history.push({
-            pathname: '/'
+            pathname: '/orders'
         });
 
+        deleteOrderTable(id);
         switchShowDeleteModal();
+    };
+
+    const deleteOrderTable = (id) => {
+        let currentOrders = [];
+
+        orders.forEach(element => {
+            if (element.id != id) {
+                currentOrders = [...currentOrders, element];
+            }
+        });
+
+        dispatch(setOrders(currentOrders));
     };
 
     return (
@@ -63,12 +79,12 @@ const OrderComponent = () => {
                                     <TableRow key={order.id}>
                                         <TableCell>{order.id}</TableCell>
                                         <TableCell>{order.customer}</TableCell>
-                                        <TableCell>{order.date}</TableCell>
+                                        <TableCell>{DateTime.changeFormatDate(order.date)}</TableCell>
                                         <TableCell>{order.status}</TableCell>
                                         <TableCell>
                                             <Link to={`/order/${order.id}`}><Edit color="primary" /></Link>
                                             &nbsp;&nbsp;&nbsp;
-                                            <Link onClick={() => showDeleteProductModal(order)}><Delete color="secondary" /></Link>
+                                            <Link onClick={() => showDeleteOrderModal(order)}><Delete color="secondary" /></Link>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -77,7 +93,7 @@ const OrderComponent = () => {
                     </TableContainer>
                 </Paper>
 
-                <DeleteModal idItem={currentProduct.id} nameItem={currentProduct.name} show={showDeleteModal} close={switchShowDeleteModal} deleteItem={deleteProduct} />
+                <DeleteModal idItem={currentOrder.id} nameItem={currentOrder.customer} show={showDeleteModal} close={switchShowDeleteModal} deleteItem={deleteOrder} />
             </div>
         </>
     );

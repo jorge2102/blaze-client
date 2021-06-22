@@ -1,6 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { makeStyles } from '@material-ui/core/styles';
 import { Table, TableContainer, TableHead, TableCell, TableBody, TableRow, Modal, Button, TextField } from '@material-ui/core';
+import { selectedOrder } from "../../redux/actions/orderActions";
+import OrderCalculation from "../../utils/OrderCalculation";
 
 const useStyles = makeStyles((theme) => ({
     modal: {
@@ -18,17 +21,36 @@ const useStyles = makeStyles((theme) => ({
 
 const AddOrderModal = ({ idItem, nameItem, show, close, deleteItem }) => {
     const styles = useStyles();
+    const products = useSelector((state) => state.allProducts.products);
+    const order = useSelector((state) => state.order);
+    const dispatch = useDispatch();
+    const [tableProducts, setTableProducts] = useState([]);
+
+    const handleChange = (e, idProduct) => {
+        const { value } = e.target;
+
+        tableProducts.forEach(product => {
+            if (product.id == idProduct) {
+                product.quantity = value;
+            }
+        });
+
+        setTableProducts([...tableProducts]);
+    };
 
     const confirm = () => {
-        //deleteItem(idItem);
+        let orderProducts = OrderCalculation.getOrderProducts(tableProducts);
+        order.orderProducts = [...orderProducts];
+
+        dispatch(selectedOrder({ ...order }));
         close();
     };
 
-    const products = [
-        { id: 1, name: 'xxx', category: 'cat', price: 10, active: 'Active', quantity: 5 },
-        { id: 2, name: 'xxx', category: 'cat', price: 10, active: 'Active', quantity: 5 },
-        { id: 3, name: 'xxx', category: 'cat', price: 10, active: 'Active', quantity: 5 }
-    ];
+    useEffect(() => {
+        const table = OrderCalculation.getTableProducts(products, order.orderProducts);
+
+        setTableProducts(table);
+    }, [show, products]);
 
     return (
         <>
@@ -49,7 +71,7 @@ const AddOrderModal = ({ idItem, nameItem, show, close, deleteItem }) => {
                             </TableHead>
 
                             <TableBody>
-                                {products.map((product) => (
+                                {tableProducts?.map((product) => (
                                     <TableRow key={product.id}>
                                         <TableCell>{product.id}</TableCell>
                                         <TableCell>{product.name}</TableCell>
@@ -61,6 +83,7 @@ const AddOrderModal = ({ idItem, nameItem, show, close, deleteItem }) => {
                                                 id={`outlined-full-width${product.id}`}
                                                 name={`outlined-full-width${product.id}`}
                                                 autoComplete="off"
+                                                onChange={(e) => handleChange(e, product.id)}
                                                 fullWidth
                                                 margin="normal"
                                                 type="number"
@@ -78,7 +101,7 @@ const AddOrderModal = ({ idItem, nameItem, show, close, deleteItem }) => {
                         </Table>
                     </TableContainer>
                     <div align="right">
-                        <Button color="secondary" onClick={confirm} >Save</Button>
+                        <Button color="secondary" onClick={confirm}>Save</Button>
                         <Button onClick={close}>Cancel</Button>
                     </div>
                 </div>

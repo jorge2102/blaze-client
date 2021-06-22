@@ -1,4 +1,4 @@
-import { React, useState } from "react";
+import { React, useState, useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import axios from "axios";
 import { Link } from "react-router-dom";
@@ -8,18 +8,16 @@ import { Edit, Delete, AddCircle } from '@material-ui/icons';
 import DeleteModal from '../../components/DeleteModal';
 import AddOrderModal from './AddOrderModal';
 import { Constants } from "../../utils/constants";
+import OrderCalculation from "../../utils/OrderCalculation";
 
 const OrderItems = () => {
-    const orders = useSelector((state) => state.allOrders.orders);
+    // const orders = useSelector((state) => state.allOrders.orders);
+    const order = useSelector((state) => state.order);
     const [currentProduct, setCurrentProduct] = useState({});
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showAddOrderModal, setShowAddOrderModal] = useState(false);
     const history = useHistory();
-    const orderItems = [
-        { id: '1', name: 'Chocolate', quantity: 10, unitPrice: 10, cost: 100 },
-        { id: '2', name: 'Chocolate', quantity: 10, unitPrice: 10, cost: 100 },
-        { id: '3', name: 'Chocolate', quantity: 10, unitPrice: 10, cost: 100 }
-    ];
+    const [orderItems, setOrderItems] = useState([]);
 
     const showDeleteProductModal = (product) => {
         setCurrentProduct(product);
@@ -47,6 +45,12 @@ const OrderItems = () => {
 
         switchShowDeleteModal();
     };
+
+    useEffect(() => {
+        const table = OrderCalculation.getTableItems(order.orderProducts);
+        
+        setOrderItems(table);
+    }, [order]);
 
     return (
         <>
@@ -89,7 +93,7 @@ const OrderItems = () => {
                     <Button variant="contained" color="primary" onClick={switchShowAddOrderModal} startIcon={<AddCircle />}>Add Item</Button>
                 </Grid>
 
-                <AddOrderModal show={showAddOrderModal} close={switchShowAddOrderModal} />
+                <AddOrderModal show={showAddOrderModal} close={switchShowAddOrderModal}  />
                 <DeleteModal idItem={currentProduct.id} nameItem={currentProduct.name} show={showDeleteModal} close={switchShowDeleteModal} deleteItem={deleteProduct} />
             </div>
         </>

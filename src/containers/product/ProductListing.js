@@ -15,7 +15,7 @@ const ProductPage = () => {
             .catch((err) => {
                 console.log("Err: ", err);
             });
-
+            console.log('ERROR', response)
         dispatch(setProducts(response.data));
     };
 

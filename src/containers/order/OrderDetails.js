@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useHistory } from "react-router-dom";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { useParams } from "react-router-dom";
@@ -11,42 +12,74 @@ import OrderTotals from "../../components/order/OrderTotals";
 import SaveIcon from '@material-ui/icons/Save';
 import CancelIcon from '@material-ui/icons/Cancel';
 import Backspace from '@material-ui/icons/Backspace';
-import { Constants } from "../../utils/constants";
+import { Constants } from "../../utils/constants"; 
+import DateTime from "../../utils/DateTime";
 
 const OrderDetails = () => {
   const { orderId } = useParams();
   let order = useSelector((state) => state.order);
   const dispatch = useDispatch();
+  const history = useHistory();
 
-  const [formValues, setFormValues] = useState({
+  const [statusValues, setStatusValues] = useState({
     id: '0',
-    name: '',
-    category: '',
-    price: '0',
-    active: false
-  })
+    customer: '',
+    date: DateTime.changeFormatDate(new Date()),
+    orderProducts: [],
+    status: 'Pending',
+    taxes: 0,
+    totalAmount: 0,
+    totalTaxes: 0
+  });
 
-  const fetchProductDetail = async (id) => {
+  const save = () => {
+    order.customer = statusValues.name;
+    order.status = statusValues.status;
+    order.date = statusValues.date;
+    
+    updateOrder(order);
+  }
+
+  const updateOrder = async (order) => {
+    let response;
+
+    if (order?.id && parseInt(order.id) != 0) {
+      response = await axios.
+        put(Constants.API_URL_ORDER, order)
+        .catch((err) => {
+          console.log("Err: ", err);
+        });
+    }
+    else {
+      response = await axios.
+        post(Constants.API_URL_ORDER, order)
+        .catch((err) => {
+          console.log("Err: ", err);
+        });
+    }
+
+    history.push({
+      pathname: '/orders'
+    });
+  };
+
+  const fetchOrderDetail = async (id) => {
     const response = await axios
       .get(`${Constants.API_URL_ORDER}/${id}`)
       .catch((err) => {
         console.log("Err: ", err);
       });
-
-    setFormValues({ ...response.data });
-    dispatch(selectedOrder(response.data));
+      
+    setStatusValues({ ...response.data });
+    dispatch(selectedOrder({...response.data}));
   };
 
-  useEffect(() => {
+  useEffect(async () => {
     if (orderId && orderId !== "") {
-      fetchProductDetail(orderId);
+      await fetchOrderDetail(orderId);
     }
-
-    return () => {
-      dispatch(removeSelectedOrder());
-    };
   }, [orderId]);
-  
+
   return (
     <div style={{ padding: 16, margin: 'auto', maxWidth: 800 }}>
       <CssBaseline />
@@ -60,13 +93,13 @@ const OrderDetails = () => {
         </Grid>
       </Grid>
 
-      <OrderStatus />
+      <OrderStatus setStatusValues={setStatusValues} />
       <OrderItems />
       <OrderTotals />
 
       <Grid container justify="flex-end">
         <Grid item style={{ marginTop: 50, marginRight: 16 }}>
-          <Button variant="contained" color="primary" startIcon={<SaveIcon />}>Complete Order</Button>
+          <Button variant="contained" color="primary" startIcon={<SaveIcon />} onClick={save}>Complete Order</Button>
         </Grid>
         <Grid item style={{ marginTop: 50 }} >
           <Link style={{ textDecoration: 'none', color: 'white' }} to={`/orders`}>

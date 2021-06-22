@@ -3,7 +3,7 @@ import axios from "axios";
 import { useHistory } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { selectedProduct, removeSelectedProduct } from "../../redux/actions/productActions";
 import { FormControl, FormControlLabel, InputLabel, Checkbox, Grid, Button, TextField, CssBaseline, Paper, NativeSelect } from '@material-ui/core';
 import SaveIcon from '@material-ui/icons/Save';
@@ -13,8 +13,6 @@ import { Constants } from "../../utils/constants";
 const ProductDetails = () => {
   const { productId } = useParams();
   const history = useHistory();
-
-  let product = useSelector((state) => state.product);
   const dispatch = useDispatch();
 
   const [formValues, setFormValues] = useState({
@@ -23,7 +21,7 @@ const ProductDetails = () => {
     category: '',
     price: '0',
     active: false
-  })
+  });
 
   const handleChange = e => {
     const { name, value, type } = e.target;
@@ -35,7 +33,7 @@ const ProductDetails = () => {
 
   const updateProduct = async () => {
     let response;
-    
+
     if (formValues?.id && parseInt(formValues.id) != 0) {
       response = await axios.
         put(Constants.API_URL_PRODUCT, formValues)
@@ -156,7 +154,7 @@ const ProductDetails = () => {
                   <Button variant="contained" color="secondary" startIcon={<CancelIcon />}>Cancel</Button>
                 </Link>
               </Grid>
-              
+
             </Grid>
           </Grid>
         </Paper>
